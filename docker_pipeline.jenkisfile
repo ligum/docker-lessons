@@ -1,0 +1,58 @@
+pipeline{
+    agent { label 'ubuntu' }
+    
+    stages {
+        stage('docker version') {
+            steps {
+                sh "echo $USER"
+                sh "docker version"
+            }
+        }
+        stage('remove workspace before build starting') {
+            steps {
+                echo 'removing workspace'
+                deleteDir()
+            }
+        }
+        stage('checkout') {
+            steps{
+                git branch: 'main',
+                    url: 'https://github.com/ligum/docker-lessons.git'
+                
+                sh 'pwd'
+                sh 'ls -la'
+                }
+        }
+        stage('test') {
+            steps{
+                dir('lesson-1') {
+                    sh "ls -la"
+                    sh "pwd"
+                }
+                    sh "ls -la"
+                    sh "pwd"
+            }
+        }
+        stage('build docker image') {
+            steps{
+                dir('lesson-1') {
+                    sh 'docker build -t ligum/jenkins-python:1.1 .'
+                }
+            }
+        }
+        stage('push docker image to github') {
+            steps{
+                withDockerRegistry(credentialsId: "dockerhub-cred-ligum", url: 'https://index.docker.io/v1/') {
+                    sh '''
+                        docker push ligum/jenkins-python:1.1
+                    '''
+                }
+            }
+        }
+        stage('remove docker image locally') {
+            steps{
+                sh 'docker rmi ligum/jenkins-python:1.1'
+            }
+        }
+    }
+}
